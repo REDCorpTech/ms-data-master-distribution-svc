@@ -1,0 +1,80 @@
+server:
+  servlet:
+    context-path: /ms-data-master-distribution/api/v1
+  port: 8083
+
+spring:
+  application:
+    name: ms-data-master-distribution
+  datasource:
+    url: jdbc:postgresql://sequrra-postgres-dev.czgs6oy66x99.ap-southeast-3.rds.amazonaws.com:5432/sequrra
+    username: sequrra_dev
+    password: MJhFmphEQf4ZPpYdsk8f
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 10
+      idle-timeout: 300000
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    url: jdbc:postgresql://sequrra-postgres-dev.czgs6oy66x99.ap-southeast-3.rds.amazonaws.com:5432/sequrra
+    user: sequrra_dev
+    password: MJhFmphEQf4ZPpYdsk8f
+    baseline-on-migrate: true
+    enabled: true
+    validate-on-migrate: true
+    baseline-version: 1.1
+    locations: classpath:db/migration
+    out-of-order: true
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+common:
+  pageable:
+    size: 100
+    page: 0
+  sorting: ASC
+
+#endpoint-configuration
+endpoint:
+  order-request:
+    base: /order-requests
+    get-all: /
+    get-by-id: /{id}
+    update: /{id}
+    delete: /{id}
+  cancel-reason:
+    base: /cancel-reason
+    get-all: /
+    get-by-id: /{id}
+    update: /{id}
+    delete: /{id}
+  delivery-note:
+    base: /delivery-note
+    get-all: /
+    get-by-id: /{id}
+    update: /{id}
+    delete: /{id}
+  good-received-note:
+    base: /delivery-note
+    get-all: /
+    get-by-id: /{id}
+    update: /{id}
+    delete: /{id}
+  order-request-detail:
+    base: /order-request-detail
+    get-all: /
+    get-by-id: /{id}
+    update: /{id}
+    delete: /{id}
+#kafka:
+#  producer:
+#    bootstrap-servers: 139.162.36.148:9093
+#    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#    value-serializer: org.apache.kafka.common.serialization.StringSerializer
+#  topics:
+#      - name: account.auth.events
+#        num-partitions: 3
+#        replication-factor: 1
