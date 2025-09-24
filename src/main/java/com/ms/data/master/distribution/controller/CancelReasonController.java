@@ -1,8 +1,10 @@
 package com.ms.data.master.distribution.controller;
 
 import com.ms.data.master.distribution.exception.AccountExceptionHandler;
+import com.ms.data.master.distribution.model.dto.distribution.CancelReasonDetailsDTO;
 import com.ms.data.master.distribution.model.dto.distribution.OrderRequestDTO;
 import com.ms.data.master.distribution.model.dto.response.PageResponse;
+import com.ms.data.master.distribution.service.CancelReasonService;
 import com.ms.data.master.distribution.service.OrderRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +19,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("${endpoint.order-request.cancel-reason}")
+@RequestMapping("${endpoint.cancel-reason.base}")
 @RequiredArgsConstructor
 @Slf4j
 public class CancelReasonController {
-    private final OrderRequestService orderRequestService;
+    private final CancelReasonService cancelReasonService;
 
     @Value("${common.pageable.size}")
     private Integer pageableSize;
@@ -32,39 +34,34 @@ public class CancelReasonController {
     @Value("${common.sorting}")
     private String sortingPage;
 
-    @GetMapping(value = "${endpoint.order-request.get-all}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PageResponse<OrderRequestDTO>> getAllOrderRequests(
+    @GetMapping(value = "${endpoint.cancel-reason.get-all}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PageResponse<CancelReasonDetailsDTO>> getAllCancelReason(
             @RequestParam(value = "pageableSize", required = false) Integer defaultPageableSize,
             @RequestParam(value = "pageablePage", required = false) Integer defaultPageablePage,
-            @ModelAttribute OrderRequestDTO orderRequestDTO,
+            @ModelAttribute CancelReasonDetailsDTO cancelReasonDetailsDTO,
             @SortDefault(sort = "id", direction = Sort.Direction.ASC) Sort sorting) throws AccountExceptionHandler {
 
-        return ResponseEntity.ok(orderRequestService.getAllService(
+        return ResponseEntity.ok(cancelReasonService.getAllService(
                 Optional.ofNullable(defaultPageableSize).filter(size -> size > 0).orElse(pageableSize),
                 Optional.ofNullable(defaultPageablePage).filter(page -> page >= 0).orElse(pageablePage),
                 Optional.ofNullable(sorting).orElse(Sort.by(Sort.Direction.fromString(sortingPage), "id")),
-                orderRequestDTO
+                cancelReasonDetailsDTO
         ));
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderRequestDTO> createOrderRequests(@RequestBody OrderRequestDTO OrderRequestDTO) {
-        return ResponseEntity.ok(orderRequestService.createService(OrderRequestDTO));
+    @GetMapping(value = "${endpoint.cancel-reason.get-by-id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CancelReasonDetailsDTO> getOrderRequests(@PathVariable UUID id) {
+        return ResponseEntity.ok(cancelReasonService.getIdService(id));
     }
 
-    @GetMapping(value = "${endpoint.order-request.get-by-id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderRequestDTO> getOrderRequests(@PathVariable UUID id) {
-        return ResponseEntity.ok(orderRequestService.getIdService(id));
+    @PutMapping( value = "${endpoint.cancel-reason.update}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CancelReasonDetailsDTO> updateOrderRequests(@PathVariable UUID id, @RequestBody CancelReasonDetailsDTO cancelReasonDetailsDTO) {
+        return ResponseEntity.ok(cancelReasonService.updateService(id, cancelReasonDetailsDTO));
     }
 
-    @PutMapping( value = "${endpoint.order-request.update}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderRequestDTO> updateOrderRequests(@PathVariable UUID id, @RequestBody OrderRequestDTO orderRequestDTO) {
-        return ResponseEntity.ok(orderRequestService.updateService(id, orderRequestDTO));
-    }
-
-    @DeleteMapping(value = "${endpoint.order-request.delete}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "${endpoint.cancel-reason.delete}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteOrderRequests(@PathVariable UUID id) {
-        orderRequestService.deleteService(id);
+        cancelReasonService.deleteService(id);
         return ResponseEntity.ok().build();
     }
 }

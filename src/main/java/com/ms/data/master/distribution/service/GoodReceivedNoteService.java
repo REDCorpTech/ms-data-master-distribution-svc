@@ -7,7 +7,6 @@ import com.ms.data.master.distribution.model.dto.response.PageResponse;
 import com.ms.data.master.distribution.model.mapper.*;
 import com.ms.data.master.distribution.respository.*;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 @Slf4j
-public class OrderRequestService {
+public class GoodReceivedNoteService {
     private final OrderRequestRepository orderRequestRepository;
     private final AddressDetailsRepository addressDetailsRepository;
     private final DeliveryNoteRepository deliveryNoteRepository;
@@ -39,19 +38,20 @@ public class OrderRequestService {
     private final ResolveIssueRepository resolveIssueRepository;
     private final CancelReasonRepository cancelReasonRepository;
 
-    public PageResponse<OrderRequestDTO> getAllService(Integer pageableSize, Integer pageablePage, Sort sorting,
-                                                       OrderRequestDTO orderRequestDTO,
-                                                       LocalDateTime startDate, LocalDateTime endDate, String search) {
-        return new PageResponse<>(
-                getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO, startDate, endDate, search)
-                        .getContent()
-                        .stream()
-                        .map(OrderRequestMapper.INSTANCE::toDTO)
-                        .collect(Collectors.toList()),
-                getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO, startDate, endDate, search).getTotalElements(),
-                getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO, startDate, endDate, search).getSize(),
-                getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO, startDate, endDate, search).getNumber() + 1
-        );
+    public PageResponse<OrderRequestDTO> getAllService(Integer pageableSize, Integer pageablePage, Sort sorting, OrderRequestDTO orderRequestDTO)
+    {
+        return
+                new PageResponse<>(
+                        getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO)
+                                .getContent()
+                                .stream()
+                                .map(OrderRequestMapper.INSTANCE::toDTO)
+                                .collect(Collectors.toList()),
+                        getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO).getTotalElements(),
+                        getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO).getSize(),
+                        getAllFromRepository(pageableSize, pageablePage, sorting, orderRequestDTO).getNumber() + 1
+
+                );
     }
 
     public OrderRequestDTO getIdService(UUID id) {
@@ -168,13 +168,9 @@ public class OrderRequestService {
         deleteFromRepository(id);
     }
 
-    private Page<OrderRequest> getAllFromRepository(Integer pageableSize, Integer pageablePage, Sort sorting,
-                                                    OrderRequestDTO orderRequestDTO,
-                                                    LocalDateTime startDate, LocalDateTime endDate, String search) {
-        return orderRequestRepository.findAll(buildSpecification(orderRequestDTO, startDate, endDate, search),
-                PageRequest.of(pageablePage, pageableSize, sorting));
+    private Page<OrderRequest> getAllFromRepository(Integer pageableSize, Integer pageablePage, Sort sorting, OrderRequestDTO orderRequestDTO) {
+        return orderRequestRepository.findAll(buildSpecification(orderRequestDTO), PageRequest.of(pageablePage, pageableSize, sorting));
     }
-
 
     private OrderRequest getIdFromRepository(UUID id) {
         return orderRequestRepository.findById(id)
@@ -198,7 +194,7 @@ public class OrderRequestService {
         return existing;
     }
 
-    private Specification<OrderRequest> buildSpecification(OrderRequestDTO orderRequestDTO, LocalDateTime startDate, LocalDateTime endDate, String search) {
+    private Specification<OrderRequest> buildSpecification(OrderRequestDTO orderRequestDTO) {
         return (root, query, criteriaBuilder) -> {
 
             List<Predicate> predicates = new ArrayList<>();
@@ -232,58 +228,6 @@ public class OrderRequestService {
             if (orderRequestDTO.getStickerReceivedDate() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("stickerReceivedDate"), orderRequestDTO.getStickerReceivedDate()));
             }
-
-            // filter by createdAt range
-            if (startDate != null && endDate != null) {
-                predicates.add(criteriaBuilder.between(root.get("createdAt"), startDate, endDate));
-            } else if (startDate != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), startDate));
-            } else if (endDate != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), endDate));
-            }
-
-            // freeText search
-            if (search != null && !search.isEmpty()) {
-                String likePattern = "%" + search.toLowerCase() + "%";
-                List<Predicate> searchPredicates = new ArrayList<>();
-
-                // normal kolom
-                searchPredicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("createdBy")), likePattern));
-
-                searchPredicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("orderRequestStatus")), likePattern));
-
-                // JSON kolom: order_request_details.brandId
-                searchPredicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(
-                                criteriaBuilder.function(
-                                        "jsonb_extract_path_text",
-                                        String.class,
-                                        root.get("orderRequestDetails"),
-                                        criteriaBuilder.literal("brandId")
-                                )
-                        ),
-                        likePattern
-                ));
-
-                // JSON kolom: order_request_details.brandName
-                searchPredicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(
-                                criteriaBuilder.function(
-                                        "jsonb_extract_path_text",
-                                        String.class,
-                                        root.get("orderRequestDetails"),
-                                        criteriaBuilder.literal("brandName")
-                                )
-                        ),
-                        likePattern
-                ));
-
-                predicates.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
-            }
-
-
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

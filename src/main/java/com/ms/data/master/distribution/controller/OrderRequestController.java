@@ -9,10 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +38,9 @@ public class OrderRequestController {
     public ResponseEntity<PageResponse<OrderRequestDTO>> getAllOrderRequests(
             @RequestParam(value = "pageableSize", required = false) Integer defaultPageableSize,
             @RequestParam(value = "pageablePage", required = false) Integer defaultPageablePage,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(value = "search", required = false) String search,
             @ModelAttribute OrderRequestDTO orderRequestDTO,
             @SortDefault(sort = "id", direction = Sort.Direction.ASC) Sort sorting) throws AccountExceptionHandler {
 
@@ -43,7 +48,10 @@ public class OrderRequestController {
                 Optional.ofNullable(defaultPageableSize).filter(size -> size > 0).orElse(pageableSize),
                 Optional.ofNullable(defaultPageablePage).filter(page -> page >= 0).orElse(pageablePage),
                 Optional.ofNullable(sorting).orElse(Sort.by(Sort.Direction.fromString(sortingPage), "id")),
-                orderRequestDTO
+                orderRequestDTO,
+                startDate,
+                endDate,
+                search
         ));
     }
 
@@ -53,9 +61,15 @@ public class OrderRequestController {
     }
 
     @GetMapping(value = "${endpoint.order-request.get-by-id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderRequestDTO> getOrderRequests(@PathVariable UUID id) {
+    public ResponseEntity<OrderRequestDTO> getOrderRequestsById(@PathVariable UUID id) {
         return ResponseEntity.ok(orderRequestService.getIdService(id));
     }
+
+    @GetMapping(value = "${endpoint.order-request.get-by-order-request-status}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<OrderRequestDTO> getOrderRequestsByOrderRequestStatus(@PathVariable String orderRequestStatus) {
+        return ResponseEntity.ok(orderRequestService.getOrderRequestStatusService(orderRequestStatus));
+    }
+
 
     @PutMapping( value = "${endpoint.order-request.update}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<OrderRequestDTO> updateOrderRequests(@PathVariable UUID id, @RequestBody OrderRequestDTO orderRequestDTO) {

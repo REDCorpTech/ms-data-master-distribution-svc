@@ -1,5 +1,6 @@
 package com.ms.data.master.distribution.model.dto.distribution;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestQRDestroyDetailsDTO {
     private UUID id;
     private String brandId;

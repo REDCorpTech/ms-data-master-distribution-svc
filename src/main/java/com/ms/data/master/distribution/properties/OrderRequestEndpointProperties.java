@@ -13,6 +13,7 @@ public class OrderRequestEndpointProperties {
     private String base;
     private String getAll;
     private String getById;
+    private String getByOrderRequestStatus;
     private String update;
     private String delete;
 }

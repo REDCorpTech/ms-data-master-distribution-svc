@@ -43,6 +43,7 @@ endpoint:
     base: /order-requests
     get-all: /
     get-by-id: /{id}
+    get-by-order-request-status: orderRequestStatus/{orderRequestStatus}
     update: /{id}
     delete: /{id}
   cancel-reason:
